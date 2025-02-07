@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/thiagodutra/fake-cart/logger"
 	"github.com/thiagodutra/fake-cart/models"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,6 +12,7 @@ import (
 	"sync"
 )
 
+var log = logger.NewLogger()
 var cartCollection = "carts"
 var database = "carts"
 
@@ -38,6 +40,7 @@ func NewCartRepository(dbClient *mongo.Client) *CartRepository {
 			dbCollection: dbClient.Database(database).Collection(cartCollection),
 		}
 	})
+	log.Log(logger.INFO, "Repository initialized", instance, nil)
 	return instance
 }
 
@@ -48,6 +51,7 @@ func (repo *CartRepository) GetById(ctx context.Context, cartId string) (*models
 		if errors.Is(mongo.ErrNoDocuments, err) {
 			return nil, fmt.Errorf("cart %s not found", cartId)
 		}
+		log.Log(logger.ERROR, "An error occurred trying to find cart by id %s", instance, err)
 		return nil, err
 	}
 	return &cart, nil
@@ -59,6 +63,7 @@ func (repo *CartRepository) Upsert(ctx context.Context, cart models.Cart) (*mode
 	opts := options.Update().SetUpsert(true)
 	_, err := repo.dbCollection.UpdateOne(ctx, filter, update, opts)
 	if err != nil {
+		log.Log(logger.ERROR, "An error occurred trying to insert/update cart by id %s", instance, err)
 		return nil, err
 	}
 	return repo.GetById(ctx, cart.ID)
@@ -67,6 +72,7 @@ func (repo *CartRepository) Upsert(ctx context.Context, cart models.Cart) (*mode
 func (repo *CartRepository) Delete(ctx context.Context, cartId string) error {
 	_, err := repo.dbCollection.DeleteOne(ctx, bson.M{"id": cartId})
 	if err != nil {
+		log.Log(logger.ERROR, "An error occurred trying to delete cart by id %s", instance, err)
 		return err
 	}
 	return nil

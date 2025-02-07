@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/thiagodutra/fake-cart/logger"
 	"github.com/thiagodutra/fake-cart/models"
 	"github.com/thiagodutra/fake-cart/repositories"
 	"sync"
@@ -19,6 +20,8 @@ type CartService struct {
 	cartRepo repositories.CartRepositoryInterface
 }
 
+var log = logger.NewLogger()
+
 var (
 	serviceInstance *CartService
 	serviceOnce     sync.Once
@@ -30,6 +33,7 @@ func NewCartService(cartRepo repositories.CartRepositoryInterface) *CartService 
 			cartRepo: cartRepo,
 		}
 	})
+	log.Log(logger.INFO, "Service initialized", serviceInstance, nil)
 	return serviceInstance
 }
 
